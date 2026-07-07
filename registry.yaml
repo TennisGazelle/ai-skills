@@ -1,0 +1,37 @@
+# Machine-readable skill catalog for ai-skills.
+# Run scripts/sync-catalog.py to regenerate CATALOG.md from this file + scanned repos.
+
+version: 1
+
+# Global skills: canonical copies live in ./skills/<name>/
+global:
+  - name: create-release
+    status: active
+    tools: [cursor, claude, codex]
+  - name: make-pr-body
+    status: active
+    tools: [cursor, claude, codex]
+  - name: pr-body
+    status: active
+    tools: [cursor, claude, codex]
+  - name: doc-audit
+    status: active
+    tools: [cursor, claude, codex]
+  - name: test-coverage-gap
+    status: active
+    tools: [cursor, claude, codex]
+  - name: branch-reconcile
+    status: active
+    tools: [cursor, claude, codex]
+  - name: log-triage
+    status: active
+    tools: [cursor, claude, codex]
+
+# Repo-local skills: scan these paths for .agents/skills/*/SKILL.md
+repo_scan_paths:
+  - ~/dev/arbor
+  - ~/dev/benchmarking-iac
+  - ~/dev/phoenix
+
+# Manual repo-local entries (override or supplement scan results)
+repo_local: []
