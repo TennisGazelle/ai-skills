@@ -7,7 +7,7 @@ Canonical global skills live in [`skills/`](skills/). Repo-local skills stay in 
 ## Quick start
 
 ```bash
-git clone git@github.com:sr-tennisgazelle/ai-skills.git ~/dev/ai-skills
+git clone git@github.com:tennisgazelle/ai-skills.git ~/dev/ai-skills
 cd ~/dev/ai-skills
 ./scripts/bootstrap.sh
 ```
