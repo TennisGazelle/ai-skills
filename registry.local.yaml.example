@@ -1,0 +1,12 @@
+# Machine-specific overlay for registry.yaml. Copy to registry.local.yaml
+# (gitignored) and edit. sync-catalog.py merges this in and writes repo-local
+# skill rows to CATALOG.local.md (also gitignored).
+
+version: 1
+
+# Repos to scan for .agents/skills/*/SKILL.md
+repo_scan_paths:
+  - ~/dev/my-project
+
+# Manual repo-local entries (override or supplement scan results)
+repo_local: []

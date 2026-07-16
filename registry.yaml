@@ -27,11 +27,6 @@ global:
     status: active
     tools: [cursor, claude, codex]
 
-# Repo-local skills: scan these paths for .agents/skills/*/SKILL.md
-repo_scan_paths:
-  - ~/dev/arbor
-  - ~/dev/benchmarking-iac
-  - ~/dev/phoenix
-
-# Manual repo-local entries (override or supplement scan results)
-repo_local: []
+# Repo-local skills are machine-specific and live in a gitignored overlay.
+# Put repo_scan_paths / repo_local entries in registry.local.yaml (see
+# registry.local.yaml.example); sync-catalog.py writes them to CATALOG.local.md.

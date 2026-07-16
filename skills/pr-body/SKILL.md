@@ -51,7 +51,7 @@ Do not create or update `pr-body.md` on a protected branch unless the release ex
 
 5. Update GitHub only when a PR already exists:
    - **Do not use `gh pr edit`** for the body — it goes through GraphQL and fails on deprecated Projects (classic) fields.
-   - Resolve the repo once: `gh repo view --json nameWithOwner -q .nameWithOwner` (e.g. `simpleroseinc/arbor`).
+   - Resolve the repo once: `gh repo view --json nameWithOwner -q .nameWithOwner` (e.g. `owner/repo`).
    - PATCH the PR body via REST:
      ```bash
      gh api "repos/${OWNER_REPO}/pulls/${PR_NUMBER}" -X PATCH -f body="$(cat pr-body.md)"

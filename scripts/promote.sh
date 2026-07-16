@@ -4,7 +4,7 @@ set -euo pipefail
 
 usage() {
   echo "Usage: $0 <repo-path> <skill-name>" >&2
-  echo "  Example: $0 ~/dev/arbor doc-audit-arbor" >&2
+  echo "  Example: $0 ~/dev/my-project doc-audit-custom" >&2
   exit 1
 }
 

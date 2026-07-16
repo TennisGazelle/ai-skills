@@ -63,7 +63,7 @@ Turn pasted logs into a **structured diagnosis**: symptom → likely cause → v
 ```
 
 5. **Repo context**
-   - If working in a known repo (arbor, benchmarking-iac), cross-check `.claude/ENV.md`, `.claude/CICD.md`, or `.claude/S3_LAMBDA_RDS.md` before guessing AWS layout.
+   - If the repo has infra docs (e.g. `.claude/ENV.md`, `.claude/CICD.md`, or similar spoke docs), cross-check them before guessing AWS layout.
 
 ## Quality bar
 

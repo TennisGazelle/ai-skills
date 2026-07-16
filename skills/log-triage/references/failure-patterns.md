@@ -8,17 +8,17 @@ Load this file when the pasted log involves AWS, CI, Docker, or database errors.
 - **Check:** instance profile name on launch template vs IAM role that exists; `aws iam get-instance-profile`
 - **Common fix:** align LT `IamInstanceProfile` with IaC-defined role name; redeploy stack
 
-## S3 cross-account (benchmark ↔ customer models)
+## S3 cross-account
 
-- **Symptom:** `AccessDenied` on `ListBucket` or `GetObject` for customer bucket
-- **Check:** bucket policy trusts `arbor-web-*-role` ARNs; identity policy uses `s3:ResourceAccount` condition
+- **Symptom:** `AccessDenied` on `ListBucket` or `GetObject` for a bucket in another account
+- **Check:** bucket policy trusts the caller's role ARNs; identity policy uses `s3:ResourceAccount` condition
 - **Common fix:** bucket policy statement missing role ARN (copy standard template from IaC docs)
 
 ## Lambda → RDS / VPC
 
 - **Symptom:** timeout connecting to RDS, `connection timed out`
 - **Check:** Lambda in correct VPC/subnets; SG allows egress to RDS SG on 5432
-- **Common fix:** security group rule in benchmarking-iac network stack
+- **Common fix:** security group rule in the network/IaC stack
 
 ## GitHub Actions CI
 
