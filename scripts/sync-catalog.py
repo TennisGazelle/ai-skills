@@ -1,0 +1,185 @@
+#!/usr/bin/env python3
+"""Regenerate CATALOG.md from registry.yaml and scanned repo-local skills."""
+
+from __future__ import annotations
+
+import os
+import re
+import sys
+from pathlib import Path
+
+try:
+    import yaml
+except ImportError:
+    print("ERROR: PyYAML required. Install with: pip install pyyaml", file=sys.stderr)
+    sys.exit(1)
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+REGISTRY_PATH = REPO_ROOT / "registry.yaml"
+LOCAL_REGISTRY_PATH = REPO_ROOT / "registry.local.yaml"
+CATALOG_PATH = REPO_ROOT / "CATALOG.md"
+LOCAL_CATALOG_PATH = REPO_ROOT / "CATALOG.local.md"
+SKILLS_DIR = REPO_ROOT / "skills"
+
+
+def expand_path(p: str) -> Path:
+    return Path(os.path.expanduser(p)).resolve()
+
+
+def parse_frontmatter(skill_md: Path) -> dict[str, str]:
+    text = skill_md.read_text(encoding="utf-8")
+    if not text.startswith("---"):
+        return {"name": skill_md.parent.name, "description": ""}
+    match = re.match(r"^---\n(.*?)\n---", text, re.DOTALL)
+    if not match:
+        return {"name": skill_md.parent.name, "description": ""}
+    meta = yaml.safe_load(match.group(1)) or {}
+    return {
+        "name": str(meta.get("name", skill_md.parent.name)),
+        "description": str(meta.get("description", "")).strip(),
+    }
+
+
+def scan_repo_skills(repo_path: Path) -> list[dict]:
+    skills_root = repo_path / ".agents" / "skills"
+    if not skills_root.is_dir():
+        return []
+    rows = []
+    for skill_dir in sorted(skills_root.iterdir()):
+        if not skill_dir.is_dir():
+            continue
+        skill_md = skill_dir / "SKILL.md"
+        if skill_md.is_symlink():
+            real = skill_md.resolve()
+            if real.is_file():
+                skill_md = real
+            else:
+                continue
+        if not skill_md.is_file():
+            continue
+        meta = parse_frontmatter(skill_md)
+        # Skip symlinks back to global catalog (already listed as global)
+        if skill_dir.is_symlink() and skill_dir.resolve().is_relative_to(SKILLS_DIR):
+            continue
+        rows.append(
+            {
+                "name": meta["name"],
+                "scope": f"repo:{repo_path.name}",
+                "tools": "cursor, claude, codex",
+                "location": str(skill_dir.relative_to(repo_path)),
+                "description": meta["description"][:120]
+                + ("…" if len(meta["description"]) > 120 else ""),
+                "status": "active",
+            }
+        )
+    return rows
+
+
+def load_registry(path: Path) -> dict:
+    with path.open(encoding="utf-8") as f:
+        return yaml.safe_load(f) or {}
+
+
+def global_rows(registry: dict) -> list[dict]:
+    rows = []
+    for entry in registry.get("global", []):
+        name = entry["name"]
+        skill_md = SKILLS_DIR / name / "SKILL.md"
+        if skill_md.is_file():
+            meta = parse_frontmatter(skill_md)
+            desc = meta["description"]
+        else:
+            desc = "(SKILL.md missing)"
+        tools = ", ".join(entry.get("tools", ["cursor", "claude", "codex"]))
+        rows.append(
+            {
+                "name": name,
+                "scope": "global",
+                "tools": tools,
+                "location": f"skills/{name}/",
+                "description": desc[:120] + ("…" if len(desc) > 120 else ""),
+                "status": entry.get("status", "active"),
+            }
+        )
+    return rows
+
+
+def render_catalog(title: str, note: str, rows: list[dict]) -> str:
+    lines = [
+        f"# {title}",
+        "",
+        note,
+        "",
+        "| name | scope | tools | location | description | status |",
+        "|------|-------|-------|----------|-------------|--------|",
+    ]
+    for row in rows:
+        desc = row["description"].replace("|", "\\|")
+        lines.append(
+            f"| {row['name']} | {row['scope']} | {row['tools']} | `{row['location']}` | {desc} | {row['status']} |"
+        )
+    lines.append("")
+    return "\n".join(lines)
+
+
+def local_rows(local_registry: dict) -> list[dict]:
+    r_rows: list[dict] = []
+
+    for path_str in local_registry.get("repo_scan_paths", []):
+        repo = expand_path(path_str)
+        if repo.is_dir():
+            r_rows.extend(scan_repo_skills(repo))
+
+    for entry in local_registry.get("repo_local", []):
+        r_rows.append(
+            {
+                "name": entry["name"],
+                "scope": entry.get("scope", "repo:unknown"),
+                "tools": ", ".join(entry.get("tools", ["cursor", "claude", "codex"])),
+                "location": entry.get("location", ""),
+                "description": entry.get("description", ""),
+                "status": entry.get("status", "active"),
+            }
+        )
+
+    # Deduplicate repo rows by name+scope
+    seen = set()
+    deduped = []
+    for row in r_rows:
+        key = (row["name"], row["scope"])
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(row)
+    return deduped
+
+
+def main() -> int:
+    g_rows = global_rows(load_registry(REGISTRY_PATH))
+    CATALOG_PATH.write_text(
+        render_catalog(
+            "Skill Catalog",
+            "Auto-generated by `scripts/sync-catalog.py` from `registry.yaml`. Do not edit by hand.",
+            g_rows,
+        ),
+        encoding="utf-8",
+    )
+    print(f"Wrote {CATALOG_PATH} ({len(g_rows)} global)")
+
+    if LOCAL_REGISTRY_PATH.is_file():
+        r_rows = local_rows(load_registry(LOCAL_REGISTRY_PATH))
+        LOCAL_CATALOG_PATH.write_text(
+            render_catalog(
+                "Skill Catalog (local)",
+                "Auto-generated by `scripts/sync-catalog.py` from `registry.local.yaml`. "
+                "Gitignored; do not edit by hand.",
+                r_rows,
+            ),
+            encoding="utf-8",
+        )
+        print(f"Wrote {LOCAL_CATALOG_PATH} ({len(r_rows)} repo-local)")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
