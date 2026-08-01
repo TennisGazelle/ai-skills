@@ -13,8 +13,9 @@ There are two complementary modes — use either or both.
 Makes every skill available in every project on this machine.
 
 ```bash
-git clone https://github.com/tennisgazelle/ai-skills.git ~/dev/ai-skills
+git clone --recurse-submodules https://github.com/tennisgazelle/ai-skills.git ~/dev/ai-skills
 cd ~/dev/ai-skills
+# after a plain clone: git submodule update --init --recursive
 ./scripts/bootstrap.sh
 ```
 
@@ -56,6 +57,8 @@ git submodule update --remote .agents/ai-skills
 ```text
 ai-skills/                          # this repo (global skills)
   skills/<name>/SKILL.md
+  lib/<upstream>/                   # git submodules (upstream sources)
+  scripts/submod-parity.sh          # sync submodule branches + re-vendor
 
 <repo>/.agents/skills/<name>/       # repo-local (committed to that repo)
 <repo>/.agents/ai-skills/           # optional submodule mount (mode 2)
@@ -63,6 +66,18 @@ ai-skills/                          # this repo (global skills)
 ```
 
 Cursor and Codex read `.agents/skills/` natively. Claude Code reads `.claude/skills/` only — hence the symlink.
+
+## Upstream sources in `lib/`
+
+Some skills are **vendored** (copied) from git submodules under [`lib/`](lib/), not symlinked. Agents use the copies in `skills/`. See [`lib/README.md`](lib/README.md).
+
+To pull the latest matching submodule branch and refresh vendored skill files:
+
+```bash
+./scripts/submod-parity.sh
+```
+
+That checks out each submodule’s branch matching the parent branch (with a `master`↔`main` alias), re-copies mapped trees into `skills/`, re-applies local adaptations, and regenerates `CATALOG.md`. It does not commit — review and commit yourself. Or invoke the `submod-parity` skill.
 
 ## Decision rubric: global vs repo-local
 
@@ -77,6 +92,7 @@ Cursor and Codex read `.agents/skills/` natively. Claude Code reads `.claude/ski
 ## Catalog maintenance
 
 - **Global skills:** edit `skills/<name>/SKILL.md`; run `./scripts/sync-catalog.py` to refresh `CATALOG.md`.
+- **Vendored from `lib/`:** prefer `./scripts/submod-parity.sh` (or the `submod-parity` skill) over hand-editing upstream bodies; local adaptations live in `scripts/ponytail-vendor-adapt.sh`.
 - **Repo-local skills (machine-specific):** copy `registry.local.yaml.example` to `registry.local.yaml` (gitignored), add your repo paths, then run `./scripts/sync-catalog.py` — repo-local rows land in `CATALOG.local.md` (also gitignored), keeping the committed catalog clean.
 - **Promote / demote:** `./scripts/promote.sh` and `./scripts/demote.sh` move skills between a repo and the global catalog.
 
@@ -85,3 +101,4 @@ Cursor and Codex read `.agents/skills/` natively. Claude Code reads `.claude/ski
 - [CATALOG.md](CATALOG.md) — human-readable index of global skills
 - [registry.yaml](registry.yaml) — machine-readable index
 - [registry.local.yaml.example](registry.local.yaml.example) — template for the machine-specific overlay
+- [lib/README.md](lib/README.md) — upstream submodules and vendoring policy
