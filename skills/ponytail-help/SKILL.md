@@ -38,6 +38,31 @@ Codex uses `@ponytail`, `@ponytail-review`, and `@ponytail-help`; Claude Code
 and OpenCode use the slash-command forms above (OpenCode ships all six as
 slash commands).
 
+## Recommended order
+
+No single workflow forces all six together, but if you're running the whole
+family against a repo (e.g. "audit this codebase with ponytail"), this order
+matches how the skills actually depend on each other:
+
+1. **`ponytail-help`** (this card) — orientation, no dependency, safe to check
+   anytime.
+2. **`ponytail`** — the only skill that *writes* anything: code plus
+   `ponytail: <ceiling>, <upgrade path>` comments as shortcuts accumulate.
+   Only relevant when writing new code; it has nothing to do against a
+   codebase that already exists and wasn't built under it.
+3. **`ponytail-audit`** — whole-repo over-engineering scan. Independent of
+   step 2's markers, so it's the right first read on existing code.
+4. **`ponytail-debt`** — harvests the `ponytail:` markers step 2 leaves
+   behind. Run after step 2 has had a chance to run; on a codebase that
+   was never built under `ponytail`, this correctly reports a clean ledger.
+5. **`ponytail-gain`** — static scoreboard, shown last since its own output
+   points back to steps 3-4 ("This repo: /ponytail-debt ... /ponytail-audit
+   ...") for the real per-repo numbers.
+
+`ponytail-review` (diff-scoped, not listed above) runs whenever there's a
+diff to review — it doesn't fit the whole-repo sequence, use it per PR/change
+instead.
+
 ## Deactivate
 
 Say "stop ponytail" or "normal mode". Resume anytime with `/ponytail`.
