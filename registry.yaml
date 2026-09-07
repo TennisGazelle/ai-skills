@@ -53,6 +53,12 @@ global:
   - name: submod-parity
     status: active
     tools: [cursor, claude, codex]
+  - name: legal-check
+    status: active
+    tools: [cursor, claude, codex]
+  - name: accessibility-check
+    status: active
+    tools: [cursor, claude, codex]
 
 # Repo-local skills are machine-specific and live in a gitignored overlay.
 # Put repo_scan_paths / repo_local entries in registry.local.yaml (see
